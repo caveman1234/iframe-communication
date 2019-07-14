@@ -1,6 +1,9 @@
 
 
-
+/**
+ * 所有iframe必须有name属性
+ * 事件取消注册只支持 在当前iframe按 类型取消注册 本iframe的事件，不支持夸frame取消注册
+ */
 
 class EventHub{
   constructor(){
@@ -246,12 +249,46 @@ class EventHub{
   isTopWindow(){
     return window.parent === window;
   }
+  
+  /**
+   * 取消顶层事件
+   * @param {String} type 类型
+   */
+  offTopWindowEvent(type){
+    let _this = this;
+    let communicationMsgDeal = {
+      type:_this.__OFF_TOPWINDOW_MESSAGE_COMMUNICATION__,
+      eventItem:{
+        eventType:type,
+        path:[window.name]
+      }
+    }
+    window.parent.postMessage(communicationMsgDeal,"*");
+  }
+  /**
+   * 检查类型
+   * @param {String} eventType 事件类型
+   */
+  checkType(eventType){
+
+  }
+  /**
+   * 取消本iframe 的事件 再发消息取消top window的事件  暂时只按类型取消订阅
+   * @param {String} type 类型
+   */
+  $offIframeEvent(type){
+    this.checkType(type);
+    let index = window.iframeEvents.findIndex(v => v.eventType === type);
+    window.iframeEvents.splice(index,1);
+    this.offTopWindowEvent(type);
+  }
   /**
    * 添加事件
    * @param {String} eventType 事件类型
    * @param {Function} callback 回调函数
    */
-  on(eventType,callback){
+  $on(eventType,callback){
+    this.checkType(eventType);
     if(!eventType || (typeof callback) !== "function"){
       throw new Error("eventType,callback 必传");
     }
@@ -283,7 +320,8 @@ class EventHub{
    * @param {String} eventType 事件类型
    * @param {Object} args 回调参数
    */
-  dispatch(eventType,args){
+  $emit(eventType,args){
+    this.checkType(eventType);
     let communicationMsg = {
       type:this.__DISPATCH_MESSAGE_COMMUNICATION__,
       eventItem:{
@@ -293,30 +331,6 @@ class EventHub{
     }
     let topWindow = this.getTopWindow();
     topWindow.postMessage(communicationMsg,"*");
-  }
-  /**
-   * 取消顶层事件
-   * @param {String} type 类型
-   */
-  offTopWindowEvent(type){
-    let _this = this;
-    let communicationMsgDeal = {
-      type:_this.__OFF_TOPWINDOW_MESSAGE_COMMUNICATION__,
-      eventItem:{
-        eventType:type,
-        path:[window.name]
-      }
-    }
-    window.parent.postMessage(communicationMsgDeal,"*");
-  }
-  /**
-   * 取消本iframe 的事件 再发消息取消top window的事件  暂时只按类型取消订阅
-   * @param {String} type 类型
-   */
-  offIframeEvent(type){
-    let index = window.iframeEvents.findIndex(v => v.eventType === type);
-    window.iframeEvents.splice(index,1);
-    this.offTopWindowEvent(type);
   }
 }
 
