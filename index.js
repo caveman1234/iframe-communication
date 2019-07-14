@@ -1,6 +1,7 @@
 
 
 /**
+ * @diaoxr
  * 所有iframe必须有name属性
  * 事件取消注册只支持 在当前iframe按 类型取消注册 本iframe的事件，不支持夸frame取消注册
  */
